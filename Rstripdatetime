@@ -1,3 +1,3 @@
 df[, date_time := as.POSIXct(date_time,'%Y-%m-%d %H:%M:%S',tz = "")
                     ][, `:=`(Dt = as.Date(date_time),
-                             Tm = strftime(date_time,"%H:%M:%S"))]
+                             Tm = as.ITime(strftime(date_time,"%H:%M:%S")))]
