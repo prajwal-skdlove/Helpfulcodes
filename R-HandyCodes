@@ -131,3 +131,12 @@ source_all_files <- function(path){
 }
 
 source_all_files(pathname)
+
+####################################################################################################
+#R Pull data from Databases
+####################################################################################################
+library(DBI)
+library(sqldf)
+con <- dbconnet(odbc::odbc(), "con")
+
+test <- dbGetQuery(con, paste("select * from table a"))
