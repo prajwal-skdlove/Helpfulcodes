@@ -1,0 +1,170 @@
+########################################################################################################################
+#Get Model String
+########################################################################################################################
+
+get_model_string<-function(lst_items){
+  for (var_items in 1:length(lst_items)){
+    
+    x <- unlist(lst_items[var_items])
+    
+    for (elem_list in 1:length(x)){
+      
+      if(var_items==1){ Str_out <- paste( x[elem_list],"~",sep=" ")}
+      if(var_items>1 & var_items<length(lst_items)){Str_out <- paste( Str_out,x[elem_list],"+",sep=" ")}
+      if(var_items == length(lst_items) & elem_list < length(x)){Str_out <- paste( Str_out,x[elem_list],"+",sep=" ")}
+      if(var_items == length(lst_items) & elem_list == length(x)){Str_out <- paste( Str_out,x[elem_list],sep=" ")}
+      
+      #  var_items<length(x)){Str_out <- paste( Str_out,x[elem_list],"+",sep=" ")}
+      #}
+    }
+    
+  }
+  # print(Str_out)
+  # regmodel <- multinom(Str_out, data= df_indata, family = binomial)
+  return(Str_out)
+}
+
+########################################################################################################################
+#Multinomial Models
+########################################################################################################################
+library(data.table)
+library(reshape2)
+library(nnet)
+library(DescTools)
+
+get_model_tables <- function(model_summary_stat,name){
+
+  t1 <- model_summary_stat
+  #t2 <- matrix(data = name ,nrow=length(rownames(t1)), ncol=1)
+  t2 <- data.table(matrix(data = rownames(t1), nrow=length(rownames(t1)), ncol = 1))
+  colnames(t2) <- c("Dependent_Var")
+  t3 <- cbind(t2,data.table(t1))
+  t4 <- melt(t3, id = c("Dependent_Var"))
+  names(t4)[names(t4) == 'value'] <- name
+  return(t4)
+}
+
+
+getCoeffMNL <- function(df_Data, lst_Model,outfilepath,filename,mdl_desc,pvalue=0.20){
+  time1 = Sys.time()
+  tx1 <- as.formula(gsub(","," +",get_model_string(lst_Model)))
+  dput(tx1)
+  df_model <<- df_Data #assign variable globally as PesudoR2 evaluates the model and need to eval the dataset to give scores
+  regmodel <- multinom(tx1, data= df_model, family = binomial, model = TRUE) #multinomial models
+
+  cf <- coef(regmodel) #coefficients
+  se <- summary(regmodel)$standard.errors #standard erros
+  z<- cf/se #z score
+
+  p <- (1 - pnorm(abs(z), 0, 1)) * 2 #P-value, 2-tailed wald z test significance of coefficients
+  oddsratio <- exp(coef(regmodel)) #odds ratio
+
+  
+  model.fit <- PseudoR2(regmodel, which = "all") #Get Model Fit Metrics
+
+  #Convert the model values to a table and combine them
+  ex <- get_model_tables(cf,"Coefficients")
+  ex1 <- get_model_tables(se,"SE")
+  ex2 <- get_model_tables(z,"Z")
+  ex3 <- get_model_tables(p,"p-value")
+  ex4 <- get_model_tables(oddsratio, "Odds Ratio")
+  ex5 <- merge(ex,ex1) %>% merge(ex2) %>% merge(ex3) %>% merge(ex4)
+  ex5$Model <- gsub(",","+",get_model_string(lst_Model))
+  ex5 <- data.frame(ex5)
+  ex5 <-ex5[,c(length(colnames(ex5)), 1:(length(colnames(ex5))-1))]
+  #ex5$AIC <- summary(regmodel)$AIC
+  ex5$Deviance <- summary(regmodel)$deviance
+  ex5 <- cbind(ex5,data.frame(t(model.fit)))
+  ex5$Desc <- paste0(mdl_desc)
+  ex5$Sortvar <- paste0(ex5$variable,ex5$Dependent_Var)
+  dput(paste0("AIC = ", summary(regmodel)$AIC))
+  dput(paste0("Deviance = ", summary(regmodel)$deviance))
+  dput("")
+  
+  rm(list=ls(envir=globalenv())[grep(glob2rx("df_model"), ls(envir=globalenv()))],envir=globalenv()) #remove the global assignment
+  
+  # varslct_ex6 <- c("Desc", "Model", "Dependent_Var", "variable", "Coefficients","p.value","Odds.Ratio","Sortvar")
+  # pval <- 0.05
+  # ex6 <- as.data.table(ex5)[, ..varslct_ex6][,Coefficients := round(ifelse(p.value > pval,0,Coefficients),2)][order(Sortvar)]
+  
+  fwrite(ex5, paste0(outfilepath,filename), append = TRUE )
+  #fwrite(ex6, paste0(outfilepath,substr(filename,1,nchar(filename)-4),"_Simplified.csv"), append = TRUE )
+  time2 = Sys.time()
+  print(time2 - time1)
+  output_list <- list(ex5, regmodel)
+  names(output_list) <- c(as.name(paste("ModelDescr",mdl_desc,sep="_")), as.name(paste("Model",mdl_desc,sep="_")))
+  return(output_list)
+ 
+}
+
+
+get_all_models <- function(df, items, outfilepath,filename,modelpvalue=0.20) {
+
+  
+  vars <- items
+  vars1 <- vars[2:length(vars)]
+  vars2 <- vars[1]
+  
+  all_model_terms <- unlist(lapply(1:(length(vars)-1), function(x) combn( vars1,x,simplify=FALSE)), recursive = FALSE)
+  
+  model_output <- lapply(1:length(all_model_terms), function(x) getCoeffMNL(df, list(vars2,all_model_terms[[x]]),outfilepath,filename,mdl_desc = paste("Model",x,sep=" "), pvalue=0.20))
+  output_file <- do.call(c,model_output)
+  return(output_file)
+  
+}
+
+
+########################################################################################################################
+#Model Plots
+########################################################################################################################
+library(ggplot2)
+library(stringr)
+
+mdl_coef_plot <- function(df, xvar, yvar, fillvar, ttl,mdlfitvar,pvalvar, pval=0.05){
+ 
+  df1 <- data.table(df)[eval(parse(text = xvar)) != "(Intercept)"  & eval(parse(text = pvalvar)) <= pval]
+  break_vals <- pretty(df1[[yvar]])
+  
+  c1 <- df1%>% 
+    ggplot(aes(x = eval(parse(text = xvar)), 
+               y = eval(parse(text = yvar)), 
+               fill = eval(parse(text = fillvar))))+
+    geom_bar(stat = "identity",position = "dodge", width = 0.5) +
+    geom_text(aes(x = eval(parse(text = xvar)), 
+                  y = eval(parse(text = yvar)),
+                  group = eval(parse(text = fillvar)),
+                  label = paste0(round(eval(parse(text = yvar)),2)),
+                  hjust = ifelse(eval(parse(text = yvar)) >= 0, - 0.1 ,1.1)),
+              position = position_dodge(width = 0.5),
+              fontface = 4,
+              #size = 4,
+              inherit.aes = TRUE)+
+    coord_flip()+
+    scale_y_continuous(expand = c(.1,.1),
+                       breaks = break_vals,
+                       labels = break_vals)+
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 15))+
+    theme_minimal()+
+    scale_fill_manual(values=c("#FA8072", "#98FB98"))+
+    labs(title = paste(paste(strwrap(unique(df[, ttl,with =FALSE])),collapse="\n"), 
+                       unique(paste(mdlfitvar ,unique(round(df[, mdlfitvar ,with =FALSE],3)), sep = " = " )), sep = "\n"),
+         x = paste(""), y = paste(toupper(yvar)),
+         fill = paste(f1))+
+    theme(plot.title = element_text(color = "black", size = 16, face = "bold.italic", hjust = 0.5),
+          axis.title.x = element_text(color="black", size=10, face="bold"),
+          axis.title.y = element_text(color="black", size=10, face="bold"),
+          axis.text.x =element_text(face="bold", size = 10),
+          axis.text.y = element_text(face="bold", size = 12),
+          #text = element_text(face = "bold", size = 10),
+          legend.position = "bottom",
+          legend.background = element_rect(fill="lightgray"),
+          axis.line = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank())
+  
+ return(c1)
+}
+
+
