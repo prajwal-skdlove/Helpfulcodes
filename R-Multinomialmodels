@@ -1,4 +1,38 @@
 ########################################################################################################################
+#Create dummies, model matrix
+########################################################################################################################
+
+fn_create_dummy <- function(df, var_list) {
+  
+
+  fmla_01 <- paste0("~ ",paste(paste(var_list,collapse = " + "), "1", sep =" - ")) #set formula to be passed to create dummy
+  df1 <- df[,c(var_list), with = FALSE]  #create a datable with just variables needed
+  var_NA <- intersect(which(sapply(df1, is.factor)), which(sapply(df1, anyNA))) #get variables need to force NA
+  if (!(is_empty(var_list)))  df1[, (var_NA) := lapply(.SD, addNA), .SDcols = var_NA] #explicit NA level to create a dummy for incidence
+  #create a dummyfor each factor
+  df2 <- df1 %>% model.matrix(as.formula(fmla_01), ., 
+                              contrasts.arg = lapply(.[,..var_list], contrasts, contrasts = FALSE)) %>% data.table(.)
+  
+  #for variables with NA, a dummy for NA is created
+  varname_NA <- colnames(df2)[grep("NA",colnames(df2))]
+  if (!(is_empty(varname_NA))) {
+  df3 <- df2[, lapply(.SD, function(x) ifelse(x == 1, 1, 0)), .SDcols = varname_NA]
+  colnames(df3) <- (paste0(substr(varname_NA, 1, nchar(varname_NA)-2), "Inc")) 
+  
+  df4 <- cbind(df2[,!(varname_NA), with = FALSE ], df3)
+  }
+  else {
+  df4 <- df2
+  }
+  
+  df5 <- cbind(df[, !(var_list), with = FALSE], df4)
+  
+  
+  return(df5)
+}
+
+
+########################################################################################################################
 #Get Model String
 ########################################################################################################################
 
