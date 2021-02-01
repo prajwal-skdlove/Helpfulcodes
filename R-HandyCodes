@@ -140,3 +140,12 @@ library(sqldf)
 con <- dbconnet(odbc::odbc(), "con")
 
 test <- dbGetQuery(con, paste("select * from table a"))
+
+####################################################################################################
+#R Copy Files to and From
+####################################################################################################
+file_rename <- paste(substr(files_in_folder, nchar(files_in_folder) - 13,nchar(files_in_folder)-4), filename, sep = "_")
+file_rename
+
+mapply(function(x) file.rename(from = paste(from_path,x,sep="/"),to = paste(to_path,y, sep="/")), x = files_in_folder, y = file_rename)
+
