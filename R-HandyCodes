@@ -147,5 +147,5 @@ test <- dbGetQuery(con, paste("select * from table a"))
 file_rename <- paste(substr(files_in_folder, nchar(files_in_folder) - 13,nchar(files_in_folder)-4), filename, sep = "_")
 file_rename
 
-mapply(function(x) file.rename(from = paste(from_path,x,sep="/"),to = paste(to_path,y, sep="/")), x = files_in_folder, y = file_rename)
+mapply(function(x,y) file.rename(from = paste(path_from,x,sep="/"),to = paste(path_to,y, sep="/")), x = files_in_folder, y = file_rename)
 
