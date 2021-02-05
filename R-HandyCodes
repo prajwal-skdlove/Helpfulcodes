@@ -156,3 +156,17 @@ name_list <- function(x){ #Function to remove . & spaces from name
   names(x) <- gsub(".", "_",gsub(" ", "",trimws(names(x)), fixed = TRUE), fixed = TRUE)
   return(x)
 }
+
+
+####################################################################################################
+#Insane Date Convert
+####################################################################################################
+var_dt <- colnames(df_total02)[grep(glob2rx("*DATE*"), toupper(colnames(df_total02)))]
+var_dt
+
+df_total02 <- df_total01[, paste(var_dt) := lapply(.SD, 
+                                                function(x)
+                                                  ifelse(is.na(tryCatch(as.Date(x, format = "%m/%d/%Y",origin="1899-12-30"), error = function(e) e)),
+                                                         format(as.Date(x,origin="1899-12-30"), "%Y-%m-%d"),
+                                                         format(as.Date(x, format = "%m/%d/%Y",origin="1899-12-30"),"%Y-%m-%d"))),.SDcols = var_dt
+                                  ]
