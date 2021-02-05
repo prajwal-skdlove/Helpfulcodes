@@ -149,3 +149,10 @@ file_rename
 
 mapply(function(x,y) file.rename(from = paste(path_from,x,sep="/"),to = paste(path_to,y, sep="/")), x = files_in_folder, y = file_rename)
 
+####################################################################################################
+#Fix Column Names
+####################################################################################################
+name_list <- function(x){ #Function to remove . & spaces from name
+  names(x) <- gsub(".", "_",gsub(" ", "",trimws(names(x)), fixed = TRUE), fixed = TRUE)
+  return(x)
+}
