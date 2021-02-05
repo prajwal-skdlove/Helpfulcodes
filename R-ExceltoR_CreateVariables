@@ -10,11 +10,12 @@ df_vnm <- read.xlsx(paste0(path_root, file_vnm))
 #functions to align the colnames to the ones in excel
 get_proper_col_name <- function(df, colnamefile, colnamevar, newnamevar){
   vnm_01 <- as.data.table(colnamefile)[!is.na(colnamevar)
-                                       ][, paste("Variable") := lapply(.SD, function(x) x), .SDcols = newnamevar][, c("Variable", colnamevar), with = FALSE]
+                                       ][, paste("Variable") := lapply(.SD, function(x) trimws(x)), .SDcols = newnamevar][, c("Variable", colnamevar), with = FALSE]
   
-  names(df) <- vnm_01$Variable[match(names(df),vnm_01[[colnamevar]])]
+  names(df) <- vnm_01$Variable[match(trimws(names(df)),vnm_01[[colnamevar]])]
   return(df)
 }
+
 
 varnamefile <- df_vnm
 vname <- "Var_Qualtrics"
