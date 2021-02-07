@@ -263,4 +263,40 @@ addWorksheet(wb1,sheetname )
 writeData(wb1, sheet=sheetname,  x = df_mdl_output)
 saveWorkbook(wb1, paste0(filepath,outname), overwrite = TRUE)
 
+########################################################################################################################
+#Get Dummy Together
+########################################################################################################################
+df_mdl <- df_data4
+var_cat_01 <- c("Q1", "FA", "FB", "FC", "FD", "FE", "FF")
 
+#get all the dummy variables together & set names in one function
+v_01 <- lapply(var_cat_01, function(x) {
+  ptrn <- varnames(glob2rx(paste0(x,"*")),df_mdl)
+  ptrn_not <-  varnames(glob2rx(paste0(x,"neu","*")),df_mdl)
+  rtrn_ptrn <- paste0(ptrn[ifelse(length(which(ptrn %in% ptrn_not)) == 0, 1:length(ptrn), -which(ptrn %in% ptrn_not))],
+                      collapse=",")
+  return(rtrn_ptrn)})
+
+names(v_01)<- var_cat_01
+for (i in 1:length(v_01)){
+  assign(var_cat_01[i],c(v_01[[i]]))
+  print(paste(var_cat_01[i], c(v_01[[i]]),sep = " = "))}
+
+
+########################################################################################################################
+#Run Models together
+########################################################################################################################
+t1 <- Sys.time()
+t1
+mdl_descr <- c( "MDL_A", "MDL_B")
+model_items <- list (  MDL_A = c(Q, A),
+                      MDL_B = c(Q, B))
+
+ m1 <- lapply(1:length(model_items),
+              function(x) getCoeffMNL(df_mdl,unlist(model_items[[x]]),filepath,outname,mdl_descr[x]))
+ m1 <- do.call(c,m1)
+
+#m1 <- getCoeffMNL(df_mdl, model_items,filepath, outname,mdl_descr)
+t2 <- Sys.time()
+t2
+t2 - t1
