@@ -201,4 +201,66 @@ mdl_coef_plot <- function(df, xvar, yvar, fillvar, ttl,mdlfitvar,pvalvar, pval=0
  return(c1)
 }
 
+########################################################################################################################
+#Clean Output
+########################################################################################################################
+
+
+library(data.table)
+library(openxlsx)
+
+filepath <- "path"
+
+nm_neutral4 <-  "Model_Coefficients.csv"
+df_neutral4 <- fread(paste0(filepath, nm_neutral4))
+
+model_frmt <-function(df, ptrn, fmla, valvar){
+  df1 <- dcast(subset(df, grepl(ptrn, variable)), as.formula(fmla), value.var = valvar) %>%
+    as.data.table(.) %>%
+    .[, Var := substr(variable,1,nchar(variable)-3)]
+    
+  return(df1)
+}
+
+
+
+df_neu4_neg_coef <- model_frmt(df_neutral4, glob2rx("*neg"), "Desc + Model + variable ~ Dependent_Var", 'Coefficients')
+colnames(df_neu4_neg_coef) <- c("Desc", "Model", "variable", "Negmodel_Coef_neg", "Negmodel_Coef_pos", "Var")
+df_neu4_neg_coef1 <- df_neu4_neg_coef[,  c("Desc", "Model", "Var", "Negmodel_Coef_neg", "Negmodel_Coef_pos")]
+
+df_neu4_neg_pval <- model_frmt(df_neutral4, glob2rx("*neg"), "Desc + Model + variable ~ Dependent_Var", 'p.value')
+colnames(df_neu4_neg_pval) <- c("Desc", "Model", "variable", "Negmodel_pval_neg", "Negmodel_pval_pos", "Var")
+df_neu4_neg_pval1 <- df_neu4_neg_pval[,  c("Desc", "Model", "Var", "Negmodel_pval_neg", "Negmodel_pval_pos")]
+
+
+df_neu4_pos_coef <- model_frmt(df_neutral4, glob2rx("*pos"), "Desc + Model + variable ~ Dependent_Var", 'Coefficients')
+colnames(df_neu4_pos_coef) <- c("Desc", "Model", "variable", "Posmodel_Coef_neg", "Posmodel_Coef_pos", "Var")
+df_neu4_pos_coef1 <- df_neu4_pos_coef[,  c("Desc", "Model", "Var",  "Posmodel_Coef_neg", "Posmodel_Coef_pos")]
+
+df_neu4_pos_pval <- model_frmt(df_neutral4, glob2rx("*pos"), "Desc + Model + variable ~ Dependent_Var", 'p.value')
+colnames(df_neu4_pos_pval) <- c("Desc", "Model", "variable", "Posmodel_pval_neg", "Posmodel_pval_pos", "Var")
+df_neu4_pos_pval1 <- df_neu4_pos_pval[,  c("Desc", "Model", "Var","Posmodel_pval_neg", "Posmodel_pval_pos")]
+
+df_mdl_output <-Reduce(
+  function(x, y, ...) merge(x, y, ...), 
+  list(df_neu4_neg_coef1,df_neu4_pos_coef1,df_neu4_neg_pval1,df_neu4_pos_pval1)
+)
+
+df_factor_names <- data.table(Var = c('Q6','Q12','Q11','Q3','Q8','Q9','Q7','Q15','Q14','Q4','Q5','Q16','Q10','Q13','FA','FB','FC','FD','FE', 'FF'),
+                        Factor = c('A*','A','A','B','B','B','B','C','C','D','D','E','E','F*', 'A','B', 'C', 'D', 'E','F' ))
+
+df_mdl_output <- merge(df_mdl_output, df_factor_names, by = "Var", all.x = TRUE)
+var_df_mdl_output <- c( "Desc", "Model","Factor","Var",
+                       "Negmodel_Coef_neg", "Negmodel_Coef_pos", "Posmodel_Coef_neg", "Posmodel_Coef_pos",
+                       "Negmodel_pval_neg", "Negmodel_pval_pos", "Posmodel_pval_neg", "Posmodel_pval_pos")
+df_mdl_output <- setDT(df_mdl_output)[,var_df_mdl_output, with = FALSE]
+ 
+
+outname <- "Model_Coefficients.xlsx"
+wb1 <- createWorkbook()
+sheetname = "Models"
+addWorksheet(wb1,sheetname )
+writeData(wb1, sheet=sheetname,  x = df_mdl_output)
+saveWorkbook(wb1, paste0(filepath,outname), overwrite = TRUE)
+
 
