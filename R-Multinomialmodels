@@ -300,3 +300,117 @@ model_items <- list (  MDL_A = c(Q, A),
 t2 <- Sys.time()
 t2
 t2 - t1
+
+
+
+########################################################################################################################
+#Run Plots
+########################################################################################################################
+m1 <- fread(paste0(filepath, outname))
+df <- m1 [variable != "(Intercept)"]
+
+#Plots of all models
+df$variable <- as.character(df$variable)
+filter_var <- "Model"
+title_var <- "Model"
+x1 <- "variable"
+y1 <- "Coefficients"
+f1 <- "Dependent_Var"
+fitvar <- "McFaddenAdj"
+pvalvar <-"p.value" 
+#title_var <- unique(dt$Model)
+
+
+All_Mdl_Plots <- lapply(unique(df[[filter_var]]), function(x) mdl_coef_plot(df[eval(parse(text = filter_var)) == x,],
+                                                                            x1, 
+                                                                            y1, 
+                                                                            f1,
+                                                                            title_var,
+                                                                            fitvar,
+                                                                            pvalvar,
+                                                                            pval = 0.05))
+
+All_Mdl_Plots
+
+#Plots of all Dependent Variables
+df <- df[, NModels := uniqueN(Model), by = "variable"]
+df$variable <- as.character(df$variable)
+filter_var <- "variable"
+title_var <- "variable"
+x1 <- "Desc"
+y1 <- "Coefficients"
+f1 <- "Dependent_Var"
+fitvar <- "NModels" #this needs to be something that is empty or something that is constant and is in the dataset as we are comparing this across modesl
+pvalvar <-"p.value"
+
+
+Var_Plots_AllMdl <- lapply(unique(df[[filter_var]]), function(x) mdl_coef_plot(df[eval(parse(text = filter_var)) == x,],
+                                                                               x1, 
+                                                                               y1, 
+                                                                               f1, 
+                                                                               title_var,
+                                                                               fitvar,
+                                                                               pvalvar,
+                                                                               pval = 0.05))
+
+Var_Plots_AllMdl
+#Table of Models
+var_to_keep_01 <- c("Desc","Model","McFaddenAdj")
+df_tbl <- df[,..var_to_keep_01]%>% unique()
+print(df_tbl)
+
+
+#Print it to a pdf
+filepath <- "Z:/Analytic_Projects/2020/P2101_Thrive_Survey/Analysis/"
+plot_name <- "Thrive_Models_4neutral.pdf"
+
+pdf(paste0(filepath,plot_name),onefile = TRUE)
+All_Mdl_Plots
+Var_Plots_AllMdl
+dev.off()
+
+
+
+library(xtable)
+filepath <-  "Z:/Analytic_Projects/2020/P2101_Thrive_Survey/Analysis/"
+latex_name <-"Thrive_Models_4neutral_list.tex"
+
+addtorow          <- list()
+addtorow$pos      <- list()
+addtorow$pos[[1]] <- c(0)
+addtorow$command  <- c(paste(
+  "\\hline \n",
+  "\\endhead \n",
+  "\\hline \n",
+  "{\\footnotesize Continued on next page} \n",
+  "\\endfoot \n",
+  "\\endlastfoot \n",
+  sep=""))
+
+latex <- print.xtable(xtable(df_tbl), 
+                      print.results = FALSE,
+                      tabular.environment="longtable",
+                      floating=FALSE,
+                      include.rownames = FALSE,  # because addtorow will substitute the default row names 
+                      add.to.row = addtorow,     # this is where you actually make the substitution
+                      hline.after=c(-1))         # because addtorow will substitute the default hline for the first row
+#latex
+writeLines(
+  c(
+    "\\documentclass[12pt]{article}",
+    "\\usepackage{longtable}",
+    "\\usepackage[landscape]{geometry}",
+    "\\usepackage{booktabs}",
+    "\\usepackage{tabularx, rotating, makecell, cellspace, caption}",
+    "\\usepackage{blindtext}",
+    "\\begin{document}",
+    "\\thispagestyle{empty}",
+    latex,
+    "\\end{document}"
+  ),
+  paste0(filepath,latex_name)
+)
+
+
+
+tools::texi2pdf(paste0(filepath,latex_name), clean = TRUE)
