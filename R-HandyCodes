@@ -170,3 +170,47 @@ df_total02 <- df_total01[, paste(var_dt) := lapply(.SD,
                                                          format(as.Date(x,origin="1899-12-30"), "%Y-%m-%d"),
                                                          format(as.Date(x, format = "%m/%d/%Y",origin="1899-12-30"),"%Y-%m-%d"))),.SDcols = var_dt
                                   ]
+
+
+####################################################################################################
+#Run R with log
+####################################################################################################
+Logfile <- paste0(as.character(Sys.Date()),"_Log", ".log")
+Logpath <- "path"
+logloc <- paste0(Logpath, Logfile)
+
+
+tryCatch({
+  # Code to attempt
+  source("Codes.R")
+  
+}, error = function(err.msg){
+  # Add error message to the error log file
+  write(toString(err.msg), log.path, append=TRUE)
+}
+)
+
+
+####################################################################################################
+#Send Email
+####################################################################################################
+
+library(RDCOMClient)
+library(xtable)
+#Create output to email
+y <- print(xtable(dtlist_file), type="html", print.results = FALSE)
+body <- paste0("<html>", "Min and Max Date of the Master File and the Files Aggregated","<br>","<br>","<br>","<br>",
+               y,"<br>","<br>","<br>","<br>",
+               "Email Sent Automatically through R", "<br>",
+               "Log file located at: ", logloc, 
+               "</html>")
+#  glue("Some sentence with"),
+
+OutApp <- COMCreate("Outlook.Application")
+outMail = OutApp$CreateItem(0)
+outMail[["To"]] = paste("email add",
+                        sep = ";")
+outMail[["subject"]] = paste(as.character(Sys.Date()),"Status", sep = " ")
+outMail[["HTMLbody"]] = body
+try(outMail$Send())## send it  
+
