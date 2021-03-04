@@ -190,6 +190,16 @@ tryCatch({
 }
 )
 
+####################################################################################################
+
+#write log
+con <- file(logloc)
+sink(con, append=TRUE)
+sink(con, append=TRUE, type="message")
+
+# Restore output to console
+sink() 
+sink(type="message")
 
 ####################################################################################################
 #Send Email
