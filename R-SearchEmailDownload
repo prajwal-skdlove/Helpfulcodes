@@ -183,3 +183,4 @@ outMail[["subject"]] = paste(as.character(Sys.Date()),"R3611 Combine Status", se
 outMail[["HTMLbody"]] = body
 try(outMail$Send())## send it  
 
+#https://docs.microsoft.com/en-us/office/vba/api/outlook.attachment.saveasfile
