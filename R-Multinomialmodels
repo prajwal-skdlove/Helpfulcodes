@@ -361,8 +361,8 @@ print(df_tbl)
 
 
 #Print it to a pdf
-filepath <- "Z:/Analytic_Projects/2020/P2101_Thrive_Survey/Analysis/"
-plot_name <- "Thrive_Models_4neutral.pdf"
+filepath <- "/Analysis/"
+plot_name <- "neutral.pdf"
 
 pdf(paste0(filepath,plot_name),onefile = TRUE)
 All_Mdl_Plots
@@ -372,8 +372,8 @@ dev.off()
 
 
 library(xtable)
-filepath <-  "Z:/Analytic_Projects/2020/P2101_Thrive_Survey/Analysis/"
-latex_name <-"Thrive_Models_4neutral_list.tex"
+filepath <-  "Analysis/"
+latex_name <-"list.tex"
 
 addtorow          <- list()
 addtorow$pos      <- list()
