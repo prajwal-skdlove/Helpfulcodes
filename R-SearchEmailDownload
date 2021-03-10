@@ -129,6 +129,7 @@ if (n == 0 | !(exists("out_Dt"))| (exists("out_Dt") && is.na(out_Dt))) {
                           sep = ";")
   outMail[["subject"]] = paste(as.character(Sys.Date()),"Search Email and Download Status", sep = " ")
   outMail[["HTMLbody"]] = body
+  outMail[["Attachments"]]$Add(logloc1)
   try(outMail$Send())## send it  
 }
 
