@@ -33,7 +33,6 @@ var_lastdate
 # names(outlook_app)
 
 #set up search string
-#pattern1 <- "[PROD] R3611 Branch_Transaction_Tableau_Dashboard executed successfully%"
 pattern1 <- "%Dashboard%"
 inbox_search_string1 <- paste("urn:schemas:httpmail:subject like", paste0("'", pattern1,"'"), sep = " ")
 inbox_search_string1
@@ -96,7 +95,7 @@ dt
 #Run Only if the it finds emails that meet our criteria
 if (n > 0) {
   #Print the results of the search
-  dld_fileptrn <- glob2rx("R3611_Tableau_Summary*")
+  dld_fileptrn <- glob2rx("Summary*")
   out_path <- "C:/Files_Unloaded/"
   
   out_file_function <- sapply(1:n, function(x)function_download_save_emailattachments(srch_results$Item(x),dld_fileptrn,out_path))
@@ -176,11 +175,9 @@ body <- paste0("<html>", "Files Downloaded from Email and Appended","<br>","<br>
 
 OutApp <- COMCreate("Outlook.Application")
 outMail = OutApp$CreateItem(0)
-outMail[["To"]] = paste("prajwal.koirala@jpmchase.com",
-                        "john.h.hughes@jpmorgan.com",
-                        "nicholas.j.joyce-houghton@chase.com",
+outMail[["To"]] = paste("prajwal.koirala@email.com",                       
                         sep = ";")
-outMail[["subject"]] = paste(as.character(Sys.Date()),"R3611 Combine Status", sep = " ")
+outMail[["subject"]] = paste(as.character(Sys.Date()),"Status", sep = " ")
 outMail[["HTMLbody"]] = body
 try(outMail$Send())## send it  
 
