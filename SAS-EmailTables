@@ -1,6 +1,6 @@
 %let path = ;
 %put &path.;
-%let SAS_LogDateTimeStamp   = SAS_Log_Frd_Txn_%sysfunc(putn(%sysfunc(date()),date9.))_%sysfunc(translate(%sysfunc(putn(%sysfunc(time()),time12.)),.,:));
+%let SAS_LogDateTimeStamp   = SAS_%sysfunc(putn(%sysfunc(date()),date9.))_%sysfunc(translate(%sysfunc(putn(%sysfunc(time()),time12.)),.,:));
 %put &SAS_LogDateTimeStamp;
 %let LogOutFile  = &path./Log/&SAS_LogDateTimeStamp..log;
 %put &logoutFile.;
@@ -23,18 +23,5 @@ options mprint symbolgen spool mlogic macrogen;
 Options Sqlgeneration = dbms dbidirectexec sql_ip_trace=source;
 libname w543156 'path';
 %let sid = &sysuserid.;
-%let tsid = %sysfunc(quote(&sysuserid.@LDAP));
-
-/*************/
-/*CONNECTIONS*/
-/*************/
-%macro idw_connect(db);
-	connect to teradata(authdomain=idwprd server='idwprd' mode=teradata connection=global database=&db.);
-%mend;
-
-%macro idw_disconnect;
-	disconnect from teradata;
-%mend;
-
 
 
