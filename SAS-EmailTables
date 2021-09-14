@@ -21,7 +21,7 @@ options mprint symbolgen spool mlogic macrogen;
 
 /*SAS Macro debugging*/
 Options Sqlgeneration = dbms dbidirectexec sql_ip_trace=source;
-libname w543156 'path';
+libname sid 'path';
 %let sid = &sysuserid.;
 
 
