@@ -44,14 +44,6 @@ Password for emailaddress@email.com  [enter your password]
 wkt /home/username/.ident/username.keytab
 quit
 
-ktutil
-
-addent -password -p prajwal.koirala@PCLC0.MERKLE.LOCAL -k 1 -e aes256-cts
-Password for prajwal.koirala@PCLC0.MERKLE.LOCAL: [enter your password]
-wkt /home/prajwal.koirala/.ident/prajwal.koirala.keytab
-quit
-
-
 #Run a keytab file
 x 'user=$(whoami); kinit -k -t /home/${user}/.ident/${user}.keytab -p ${user}@email.com';
 
@@ -158,8 +150,40 @@ exec 2>$bashlog_file
 exec 1>&3 2>&4
 # Close the unused descriptors
 exec 3>&- 4>&-
-
 # Now the output of all commands goes to the original standard output & error
 
+#Creating a keypair in a server
+#in the .ssh folder create the keypair and name it
+#This will create two files. Copy the one with .pub extension to the remote server
+mkdir ~/.ssh
+ssh-keygen -t rsa
+#Move the file to the server
+ssh-copy-id -i keypair_file.pub  user@server
+cat keypair_file.pub | ssh user@server "mkdir -p ~/.ssh && cat >>  ~/.ssh/authorized_keys"
+scp keypair_file.pub <user>@<yourhost>:.ssh/authorized_keys
+#Validate it works
+ssh -i ~/.ssh/keypair_file user@server
+
+
+#Move files between servers
+scp path_to_file path_to_destination
+scp path_to_file username@server:path_to_destination #Move file from B to A while logged into B
+scp username@server:path_to_file path_to_destination #Move file from B to A while logged into A
+
+#count columns each row in a file
+cat filename.txt| awk -F"|" '{print NR, NF}' > test.csv
+#lowest column count
+cat filename.txt| awk -F"|" '{print  NF}' | sort -nu | head -n 1
+#highest column count
+cat filename.txt| awk -F"|" '{print  NF}' | sort -nu | tail -n 1
+
+#Row count
+cat filename.txt | wc -l
+
+#print specific line form a file
+sed -n 2p  filename.txt
+
+#find processes run by CRON
+ps fauxww | grep -A 1 '[C]RON'
 
 
