@@ -30,7 +30,7 @@ def chi_squared_independence_test(observed_counts, group_names, alpha=0.05):
     significant_pairs = int(p < alpha)
     
     chisq_all_groups_results_dict = chi_squared_output(chi2, dof, p, expected)
-    chisq_all_groups_results_dict["significantpairs"] = significant_pairs
+    chisq_all_groups_results_dict["significant"] = significant_pairs
     
     print("Chi-Squared Test of Independence between all Groups")
     print(f"Chi-squared statistic: {chi2:.2f};\nDegrees of freedom: {dof:.0f};\nP-value: {p:.4f}")
@@ -55,7 +55,7 @@ def chi_squared_independence_test(observed_counts, group_names, alpha=0.05):
             significant_pairs_groups = int(p_adjusted < alpha)
             
             chisq_between_groups_dict = chi_squared_output(chi2_groups, dof_groups, p_adjusted, expected_groups)
-            chisq_between_groups_dict["significantpairs"] = significant_pairs_groups
+            chisq_between_groups_dict["significant"] = significant_pairs_groups
             
             chisq_tests_dict[group_pair] = chisq_between_groups_dict
             
