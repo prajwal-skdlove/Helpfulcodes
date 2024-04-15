@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import logging.config
 import logging
-import traceback
+import yaml
 
+#%%
 # Logfilename
 def logfile_name(filelocation = None, filename = None):
     
@@ -24,7 +26,8 @@ logfilename = logfile_name()
 print(logfilename)
         
 
-# Tracebook
+#%%
+# Traceback
 def traceback_details(inputexecutesysobject):
     traceback_details = {
                         "filename": inputexecutesysobject[2].tb_frame.f_code.co_filename,
@@ -41,56 +44,72 @@ def traceback_details(inputexecutesysobject):
     return traceback_template % traceback_details
 
 
-# Creat a logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logging.basicConfig(filename=logfilename, filemode = 'w',format = "%(asctime)s - %(pathname)s - %(lineno)d -  %(levelname)s - %(message)s", datefmt = "%m/%d/%Y %I:%M:%S %p",  level=logging.DEBUG)
 
-# logging.basicConfig(filename=logfilename, filemode = 'w', format = "%(asctime)s - %(pathname)s - %(lineno)d - %(levelname)s - %(message)s", datefmt = "%m/%d/%Y %I:%M:%S %p", level=logging.DEBUG)
-
-# logging.Formatter("(%asctime)s - %(levelname)s - %(messages)s", datefmt = "%m/%d/%Y %I:%M:%S %p")
-# logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-# logging.Formatter("(%asctime)s - %(levelname)s - %(messages)s", datefmt = "%m/%d/%Y %I:%M:%S %p")
-
-
-# File handler
-# file_handler = logging.FileHandler(logfilename, mode = 'w')
-# file_handler.setLevel(logging.DEBUG)
-
-# Create a formatter
-# formatter = logging.Formatter("(%asctime)s - %(levelname)s - %(messages)s", datefmt = "%m/%d/%Y %I:%M:%S %p")
-# file_handler.setFormatter(formatter)
-
-# logger.addHandler(file_handler)
-
-# Redirect steout and stderr to the logger
-# class StreamToLogger:
-#     def __init__(self, stream, logger, log_level = logging.INFO):
-#         self.stream = stream
-#         self.logger = logger
-#         self.log_level = log_level
+#%%
         
-#     def write(self, message):
-#         self.stream.write(message)
-#         self.logger.log(self.log_level, message.strip())
-        
-#     def flush(self):
-#         pass
+class ConfigurableLogger:    
     
-# sys.stdout = StreamToLogger(sys.stdout, logger, logging.DEBUG)
-# sys.stderr = StreamToLogger(sys.stderr, logger, logging.CRITICAL)
-                              
+    logger = None
+    def __init__(self, config_file = 'D:\CodeLibrary\Python\Helpfulcodes\Codes_Python\config_logger.yaml',
+                 handlers = ['console', 'file_handler'],
+                 log_files = {'file_handler' : logfile_name()}):
+        self.log_files = log_files
+        self.handlers = handlers
+        self.load_config(config_file)
+        self.setup_logger() 
+       
+      
+    def load_config(self, config_file):
+        with open(config_file, 'r') as f:
+            self.config = yaml.safe_load(f)               
+        
+
+    def setup_logger(self):
+        if self.logger is None:
+            for handler in list(self.config['handlers']):
+                if handler not in self.handlers:
+                    del self.config['handlers'][handler]
+                    self.config['root']['handlers'].remove(handler)
+                    
+                    for loggers in self.config['loggers']:
+                        self.config['loggers'][loggers]['handlers'].remove(handler)
+                                  
+                else:
+                    # If log_files is a dict, set the filename for each handler
+                    if isinstance(self.log_files, dict):
+                        if handler in self.log_files:
+                            self.config['handlers'][handler]['filename'] = self.log_files[handler]
+                    # If log_files is a string, set the filename for all handlers
+                    elif isinstance(self.log_files, str):
+                        self.config['handlers'][handler]['filename'] = self.log_files                    
+            logging.config.dictConfig(self.config)                
+            self.logger = logging.getLogger(__name__)
+
+        
+    def log(self, message, level = logging.DEBUG):            
+        self.logger.log(level , message)
+
+                
+           
+        
+
+# Example usage
+if __name__ == "__main__":
+  logger = ConfigurableLogger()
+  logger.log("This is INFO", logging.INFO)
+  logger.log("This is DEBUG", logging.DEBUG)  
+  logger.log("This is WARNING", logging.WARNING)
+  logger.log("This is CRITICIAL", logging.CRITICAL)
+  logger.log("This is ERROR", logging.ERROR)
+  # Add exception handling for errors during logging configuration
+                          
 
 try:
     print(a)
 except:    
-    logger.critical(traceback_details(sys.exc_info()))    
+    logger.log(traceback_details(sys.exc_info()))    
     try:
         print(traceback_details())
     except:
-        logger.critical(traceback_details(sys.exc_info()))
+        logger.log(traceback_details(sys.exc_info()), logging.CRITICAL)
         
-
-        
-# logger.removeHandler(file_handler)
-# file_handler.close()

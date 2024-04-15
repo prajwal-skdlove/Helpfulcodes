@@ -5,50 +5,63 @@ import logging.config
 import yaml
 
 
+
 config_yaml = 'D:\CodeLibrary\Python\Helpfulcodes\Codes_Python\config_logger.yaml'
 log_file = 'D:\CodeLibrary\Python\Helpfulcodes\Codes_Python\Log_test.log'
-# with open(config_yaml) as f:
-#   config = yaml.safe_load(f.read())
-# config['handlers']['info_file_handler']['filename'] = log_file
-# config['handlers']['error_file_handler']['filename'] = log_file
-# config['handlers']['debug_file_handler']['filename'] = log_file
-# config['handlers']['warn_file_handler']['filename'] = log_file
-# config['handlers']['critical_file_handler']['filename'] = log_file
-# logging.config.dictConfig(config)
 
-class ConfigurableLogger:
-    def __init__(self, config_file, log_file):
+        
+class ConfigurableLogger:    
+    
+    # logger = None
+    def __init__(self, config_file = 'D:\CodeLibrary\Python\Helpfulcodes\Codes_Python\config_logger.yaml',
+                 handlers = ['console', 'file_handler'],
+                 log_files = {'file_handler' : log_file}):
+        self.log_files = log_files
+        self.handlers = handlers
         self.load_config(config_file)
-        self.setup_logfiles(log_file)
-        self.log_file = log_file
-        self.setup_logger()     
+        self.setup_logger() 
+       
       
     def load_config(self, config_file):
         with open(config_file, 'r') as f:
-            self.config = yaml.safe_load(f)
-            
-    def setup_logfiles(self, log_file):
-        self.config['handlers']['info_file_handler']['filename'] = log_file
-        self.config['handlers']['error_file_handler']['filename'] = log_file
-        self.config['handlers']['debug_file_handler']['filename'] = log_file
-        self.config['handlers']['critical_file_handler']['filename'] = log_file
-        self.config['handlers']['warn_file_handler']['filename'] = log_file        
+            self.config = yaml.safe_load(f)               
         
 
-    def setup_logger(self):  
-        logging.config.dictConfig(self.config)
-        self.logger = logging.getLogger(__name__)    
+    def setup_logger(self):
+        # if self.logger is None:
+        for handler in list(self.config['handlers']):
+            if handler not in self.handlers:
+                del self.config['handlers'][handler]
+                self.config['root']['handlers'].remove(handler)
+                
+                for loggers in self.config['loggers']:
+                    self.config['loggers'][loggers]['handlers'].remove(handler)
+                              
+            else:
+                # If log_files is a dict, set the filename for each handler
+                if isinstance(self.log_files, dict):
+                    if handler in self.log_files:
+                        self.config['handlers'][handler]['filename'] = self.log_files[handler]
+                # If log_files is a string, set the filename for all handlers
+                elif isinstance(self.log_files, str):
+                    self.config['handlers'][handler]['filename'] = self.log_files                    
+        logging.config.dictConfig(self.config)                
+        self.logger = logging.getLogger(__name__)
+
         
-    def logging(self, message, level = logging.DEBUG):    
+    def writetolog(self, message, level = logging.DEBUG):            
         self.logger.log(level , message)
+
+                
+           
+        
 
 # Example usage
 if __name__ == "__main__":
-  logger = ConfigurableLogger(config_yaml, log_file)
-  logger.logging("This is an info message")
-  logger.logging("This is an info message", logging.DEBUG)
-  logger.logging("This is an info message", logging.WARNING)
-  logger.logging("This is an info message", logging.WARNING)
-  logger.logging("This is a warning", logging.DEBUG)
-  logger.logging("This is an error with captured output", logging.ERROR)
+  logger = ConfigurableLogger()
+  logger.writetolog("This is INFO", logging.INFO)
+  logger.writetolog("This is DEBUG", logging.DEBUG)  
+  logger.writetolog("This is WARNING", logging.WARNING)
+  logger.writetolog("This is CRITICIAL", logging.CRITICAL)
+  logger.writetolog("This is ERROR", logging.ERROR)
   # Add exception handling for errors during logging configuration

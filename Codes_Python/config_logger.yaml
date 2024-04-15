@@ -11,7 +11,8 @@ formatters:
     error:
         format: "%(asctime)s- %(pathname)s - %(lineno)d - (levelname)s <PID %(process)d:%(processName)s> %(name)s.%(funcName)s(): %(message)s"
         datefmt: "%m/%d/%Y %I:%M:%S %p"
-             
+
+
 handlers:
     console:
         class: logging.StreamHandler
@@ -19,63 +20,71 @@ handlers:
         formatter: standard
         stream: ext://sys.stdout
 
-    info_file_handler:
+    file_handler:
         class: logging.handlers.RotatingFileHandler
-        level: INFO
-        formatter: standard        
-        mode: w
-        maxBytes: 10485760 # 10MB
-        backupCount: 20
-        encoding: utf8
-
-    error_file_handler:
-        class: logging.handlers.RotatingFileHandler
-        level: ERROR
+        level: DEBUG
         formatter: error        
         mode: w
         maxBytes: 10485760 # 10MB
         backupCount: 20
         encoding: utf8
+    
+    # info_file_handler:
+    #     class: logging.handlers.RotatingFileHandler
+    #     level: INFO
+    #     formatter: standard        
+    #     mode: w
+    #     maxBytes: 10485760 # 10MB
+    #     backupCount: 20
+    #     encoding: utf8
 
-    debug_file_handler:
-        class: logging.handlers.RotatingFileHandler
-        level: DEBUG
-        formatter: standard
-        mode: w
-        maxBytes: 10485760 # 10MB
-        backupCount: 20
-        encoding: utf8
+    # error_file_handler:
+    #     class: logging.handlers.RotatingFileHandler
+    #     level: ERROR
+    #     formatter: error        
+    #     mode: w
+    #     maxBytes: 10485760 # 10MB
+    #     backupCount: 20
+    #     encoding: utf8
 
-    critical_file_handler:
-        class: logging.handlers.RotatingFileHandler
-        level: CRITICAL
-        formatter: standard
-        mode: w
-        maxBytes: 10485760 # 10MB
-        backupCount: 20
-        encoding: utf8
+    # debug_file_handler:
+    #     class: logging.handlers.RotatingFileHandler
+    #     level: DEBUG
+    #     formatter: standard
+    #     mode: w
+    #     maxBytes: 10485760 # 10MB
+    #     backupCount: 20
+    #     encoding: utf8
 
-    warn_file_handler:
-        class: logging.handlers.RotatingFileHandler
-        level: WARN
-        formatter: standard
-        mode: w
-        maxBytes: 10485760 # 10MB
-        backupCount: 20
-        encoding: utf8
+    # critical_file_handler:
+    #     class: logging.handlers.RotatingFileHandler
+    #     level: CRITICAL
+    #     formatter: error
+    #     mode: w
+    #     maxBytes: 10485760 # 10MB
+    #     backupCount: 20
+    #     encoding: utf8
+
+    # warn_file_handler:
+    #     class: logging.handlers.RotatingFileHandler
+    #     level: WARN
+    #     formatter: standard
+    #     mode: w
+    #     maxBytes: 10485760 # 10MB
+    #     backupCount: 20
+    #     encoding: utf8
 
 root:
     level: DEBUG
-    handlers: [console]
-    propogate: yes
-
+    handlers: [console, file_handler]
+    
 loggers:
     <module>:
         level: DEBUG
-        handlers: [console, info_file_handler, error_file_handler, critical_file_handler, debug_file_handler, warn_file_handler]
-        propogate: no
+        handlers:  [console, file_handler]
+        propagate : False 
 
     <module.x>:
         level: DEBUG
-        handlers: [info_file_handler, error_file_handler, critical_file_handler, debug_file_handler, warn_file_handler]
-        propogate: yes
+        handlers: [ file_handler]
+        propagate : True
